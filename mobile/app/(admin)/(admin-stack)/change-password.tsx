@@ -7,14 +7,32 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@/constants/api';
 
 export default function ChangePassword() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleChangePassword = () => {
+  //Lấy userId đúng cách
+  useEffect(() => {
+    const getUser = async () => {
+      const userData = await AsyncStorage.getItem('user');
+
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        setUserId(parsedUser.id.toString());
+      }
+    };
+
+    getUser();
+  }, []);
+
+
+  const handleChangePassword = async () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
       Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
       return;
@@ -30,7 +48,40 @@ export default function ChangePassword() {
       return;
     }
 
-    Alert.alert('Thành công', 'Đổi mật khẩu thành công');
+    if (!userId) {
+      Alert.alert('Lỗi', 'Không tìm thấy user');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/users/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: Number(userId),
+          oldPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Alert.alert('Lỗi', data.message);
+        return;
+      }
+
+      Alert.alert('Thành công', data.message);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Lỗi', 'Không thể đổi mật khẩu');
+    }
   };
 
   return (
@@ -77,14 +128,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     padding: 16,
   },
-
   title: {
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 20,
     color: '#111827',
   },
-
   label: {
     fontSize: 14,
     fontWeight: '600',
@@ -92,7 +141,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: '#374151',
   },
-
   input: {
     backgroundColor: '#fff',
     padding: 14,
@@ -100,7 +148,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-
   button: {
     backgroundColor: '#4f46e5',
     padding: 16,
@@ -108,7 +155,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     alignItems: 'center',
   },
-
   buttonText: {
     color: '#fff',
     fontWeight: '700',

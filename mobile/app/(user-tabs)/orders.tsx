@@ -1,18 +1,68 @@
 import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TouchableOpacity, Alert } from 'react-native';
+
+
+const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api`;
 
 export default function OrdersScreen() {
   const [orders, setOrders] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [])
+  );
 
   const loadOrders = async () => {
-    const data = await AsyncStorage.getItem('orders');
-    if (data) {
-      setOrders(JSON.parse(data));
+    try {
+      const user = await AsyncStorage.getItem('user');
+      if (!user) return;
+
+      const parsedUser = JSON.parse(user);
+
+      const res = await fetch(
+        `${API_URL}/orders/user/${parsedUser.id}`
+      );
+
+      const data = await res.json();
+
+      console.log("ORDERS FROM API:", data);
+
+      setOrders(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // huy don
+  const cancelOrder = async (orderId: number) => {
+    try {
+      const res = await fetch(
+        `${API_URL}/orders/cancel/${orderId}`,
+        {
+          method: 'PUT',
+        }
+      );
+
+      const data = await res.json();
+
+      Alert.alert('Thông báo', data.message);
+
+      // Cập nhật trạng thái ngay trên UI
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? { ...order, status: 'CANCELLED' }
+            : order
+        )
+      );
+
+      loadOrders(); // reload lại danh sách
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -25,7 +75,8 @@ export default function OrdersScreen() {
       ) : (
         <FlatList
           data={orders}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id.toString()}
+            
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.status}>{item.status}</Text>
@@ -41,6 +92,37 @@ export default function OrdersScreen() {
               </Text>
 
               <Text style={styles.time}>{item.createdAt}</Text>
+
+              <TouchableOpacity
+                style={[
+                  styles.cancelBtn,
+                  (item.status === 'CANCELLED' || item.status === 'COMPLETED') && styles.disabledBtn,
+                ]}
+                disabled={item.status === 'CANCELLED' || item.status === 'COMPLETED'}
+                onPress={() =>
+                  item.status === 'PENDING' &&
+                  Alert.alert(
+                    'Xác nhận',
+                    'Bạn có chắc muốn hủy đơn này?',
+                    [
+                      { text: 'Không' },
+                      {
+                        text: 'Hủy đơn',
+                        onPress: () => cancelOrder(item.id),
+                        style: 'destructive',
+                      },
+                    ]
+                  )
+                }
+              >
+                <Text style={styles.cancelText}>
+                  {item.status === 'CANCELLED'
+                    ? 'Đã hủy'
+                    : item.status === 'COMPLETED'
+                      ? 'Đã hoàn thành'
+                      : 'Hủy đơn hàng'}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         />
@@ -75,5 +157,21 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     color: '#999',
+  },
+  cancelBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+    backgroundColor: '#ff3b30',
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  cancelText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  disabledBtn: {
+    backgroundColor: '#999',
   },
 });

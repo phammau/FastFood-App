@@ -1,24 +1,80 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import products from '../(admin-stack)/products';
+import { useEffect, useState } from 'react';
+import { API_URL } from '@/constants/api';
+
 
 export default function AdminHome() {
+  const [totalFoods, setTotalFoods] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalCompletedOrders, setTotalCompletedOrders] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  const fetchTotalFood = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/foods/count`);
+      const data = await res.json();
+      setTotalFoods(data.total);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchTotalUsers = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/users/count`);
+      const data = await res.json();
+      setTotalUsers(data.total);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchCompletedOrders = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/orders/count/completed`);
+      const data = await res.json();
+      setTotalCompletedOrders(data.total);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchRevenue = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/orders/revenue`);
+      const data = await res.json();
+      setTotalRevenue(data.total);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotalFood();
+    fetchTotalUsers();
+    fetchCompletedOrders();
+    fetchRevenue();
+  }, []);
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       
-      <Text style={styles.title}>Admin Dashboard</Text>
+      <Text style={styles.title}>ADMIN FOOD</Text>
 
-      {/* ====== STATISTICS ====== */}
+      {/* STATISTICS */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Ionicons name="receipt-outline" size={26} color="#2563eb" />
-          <Text style={styles.statNumber}>125</Text>
+          <Text style={styles.statNumber}>{ totalCompletedOrders }</Text>
           <Text style={styles.statLabel}>Orders</Text>
         </View>
 
         <View style={styles.statCard}>
           <Ionicons name="people-outline" size={26} color="#16a34a" />
-          <Text style={styles.statNumber}>540</Text>
+          <Text style={styles.statNumber}>{ totalUsers }</Text>
           <Text style={styles.statLabel}>Users</Text>
         </View>
       </View>
@@ -26,18 +82,18 @@ export default function AdminHome() {
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Ionicons name="restaurant-outline" size={26} color="#f59e0b" />
-          <Text style={styles.statNumber}>32</Text>
+          <Text style={styles.statNumber}>{ totalFoods }</Text>
           <Text style={styles.statLabel}>Restaurants</Text>
         </View>
 
         <View style={styles.statCard}>
           <Ionicons name="cash-outline" size={26} color="#ef4444" />
-          <Text style={styles.statNumber}>85M</Text>
+          <Text style={styles.statNumber}> { Number (totalRevenue).toLocaleString('vi-VN') } đ</Text>
           <Text style={styles.statLabel}>Revenue</Text>
         </View>
       </View>
 
-      {/* ====== QUICK ACTION ====== */}
+      {/*QUICK ACTION */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
 
       <TouchableOpacity 

@@ -17,17 +17,53 @@ type CartItem = {
 };
 
 export default function PayResultScreen() {
-  const { method } = useLocalSearchParams<{ method: string }>();
+  const { method, orderId } = useLocalSearchParams<{
+    method: string;
+    orderId: string;
+  }>();
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const loadCart = async () => {
+    const saveOrder = async () => {
       const json = await AsyncStorage.getItem('cart');
-      setCart(json ? JSON.parse(json) : []);
-      await AsyncStorage.removeItem('cart'); // ✅ clear giỏ sau khi đặt
+      const cartData = json ? JSON.parse(json) : [];
+
+      if (cartData.length === 0) return;
+
+      // Tạo đơn hàng mới
+      const newOrder = {
+        id: Date.now().toString(),
+        items: cartData.map((item: any) => ({
+          name: item.foodName,
+          quantity: item.quantity,
+        })),
+        total: cartData.reduce(
+          (sum: number, item: any) =>
+            sum + item.price * item.quantity,
+          0
+        ),
+        status: 'Đang xử lý',
+        createdAt: new Date().toLocaleString(),
+      };
+
+      // Lấy danh sách orders cũ
+      const oldOrders = await AsyncStorage.getItem('orders');
+      const orders = oldOrders ? JSON.parse(oldOrders) : [];
+      // Lưu lại
+      await AsyncStorage.setItem(
+        'orders',
+        JSON.stringify([newOrder, ...orders])
+      );
+
+      // Clear cart
+      await AsyncStorage.removeItem('cart');
+
+      setCart(cartData);
     };
-    loadCart();
+
+    saveOrder();
   }, []);
+
 
   const getMethodText = () => {
     switch (method) {

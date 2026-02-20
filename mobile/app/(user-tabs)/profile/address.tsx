@@ -1,13 +1,37 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function AddressScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Địa chỉ giao hàng</Text>
+  const { darkMode } = useTheme();
 
-      <View style={styles.addressBox}>
-        <Text>🏠 Nhà riêng</Text>
-        <Text>123 Nguyễn Văn A, Quận 1</Text>
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: darkMode ? '#121212' : '#f5f5f5' },
+      ]}
+    >
+      <Text
+        style={[
+          styles.title,
+          { color: darkMode ? '#fff' : '#000' },
+        ]}
+      >
+        Địa chỉ giao hàng
+      </Text>
+
+      <View
+        style={[
+          styles.addressBox,
+          { backgroundColor: darkMode ? '#1e1e1e' : '#fff' },
+        ]}
+      >
+        <Text style={{ color: darkMode ? '#fff' : '#000' }}>
+          🏠 Nhà riêng
+        </Text>
+        <Text style={{ color: darkMode ? '#ccc' : '#555' }}>
+          123 Nguyễn Văn A, Quận 1
+        </Text>
       </View>
 
       <TouchableOpacity style={styles.button}>

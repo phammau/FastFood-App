@@ -24,12 +24,7 @@ type Product = {
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
-
-  // useEffect(() => {
-  useFocusEffect(
-    useCallback(() => {
-      fetchFoods();
-    }, []));
+  const [totalFoods, setTotalFoods] = useState(0);
 
   const fetchFoods = async () => {
     try {
@@ -41,6 +36,22 @@ export default function Products() {
     }
   };
 
+  const fetchTotal = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/foods/count`);
+      const data = await res.json();
+      setTotalFoods(data.total);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchFoods();
+      fetchTotal();
+    }, []));
+  
   // DELETE
   const handleDelete = async (id: number) => {
     const doDelete = async () => {

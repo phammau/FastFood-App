@@ -6,25 +6,102 @@ import {
   FlatList,
 } from 'react-native';
 import { useState, useMemo } from 'react';
+import { useEffect } from 'react';
+import { API_URL } from '@/constants/api';
+
 
 export default function OrderStatus() {
-  const [active, setActive] = useState('Pending');
+  const [active, setActive] = useState('PENDING');
+  const [orders, setOrders] = useState<any[]>([]);
 
-  // Demo data (sau này đổi thành API)
-  const orders = [
-    { id: '1', customer: 'Nguyen Van A', status: 'Pending', total: '250.000đ' },
-    { id: '2', customer: 'Tran Thi B', status: 'Shipping', total: '540.000đ' },
-    { id: '3', customer: 'Le Van C', status: 'Completed', total: '120.000đ' },
-    { id: '4', customer: 'Pham Van D', status: 'Cancelled', total: '300.000đ' },
-    { id: '5', customer: 'Hoang Thi E', status: 'Cancelled', total: '200.000đ' },
-  ];
-
-  const statuses = ['Pending', 'Shipping', 'Completed', 'Cancelled'];
+  const statuses = [
+  { label: 'Đang xử lý', value: 'PENDING' },
+  { label: 'Đang giao', value: 'SHIPPING' },
+  { label: 'Hoàn thành', value: 'COMPLETED' },
+  { label: 'Đã hủy', value: 'CANCELLED' },
+];
 
   // Lọc theo status đang chọn
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => order.status === active);
-  }, [active]);
+  }, [active, orders]);
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/orders`);
+      const data = await res.json();
+      setOrders(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // xu ly don
+  const handleProcessOrder = async (orderId: number) => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/orders/status/${orderId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'SHIPPING' }),
+        }
+      );
+
+      const data = await res.json();
+      console.log(data.message);
+
+      // cập nhật UI ngay
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? { ...order, status: 'SHIPPING' }
+            : order
+        )
+      );
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // giao hàng xong
+  const handleCompleteOrder = async (orderId: number) => {
+    try {
+      const res = await fetch(
+        `${API_URL}/api/orders/status/${orderId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'COMPLETED' }),
+        }
+      );
+
+      const data = await res.json();
+      console.log(data.message);
+
+      // cập nhật UI ngay
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? { ...order, status: 'COMPLETED' }
+            : order
+        )
+      );
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -34,23 +111,24 @@ export default function OrderStatus() {
       <View style={styles.tabRow}>
         {statuses.map((status) => (
           <TouchableOpacity
-            key={status}
+            key={status.value}
             style={[
               styles.statusBtn,
-              active === status && styles.activeBtn,
+              active === status.value && styles.activeBtn,
             ]}
-            onPress={() => setActive(status)}
+            onPress={() => setActive(status.value)}
           >
             <Text
               style={[
                 styles.statusText,
-                active === status && styles.activeText,
+                active === status.value && styles.activeText,
               ]}
             >
-              {status}
+              {status.label}
             </Text>
           </TouchableOpacity>
         ))}
+
       </View>
 
       {/* Danh sách đơn */}
@@ -62,11 +140,33 @@ export default function OrderStatus() {
             Không có đơn nào
           </Text>
         }
+
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.orderId}>Order {item.id}</Text>
             <Text>Customer: {item.customer}</Text>
-            <Text>Total: {item.total}</Text>
+            <Text>Total: {Number(item.total).toLocaleString('vi-VN')} đ</Text>
+
+            {/* PENDING -> SHIPPING */}
+            {item.status === 'PENDING' && (
+              <TouchableOpacity
+                style={styles.processBtn}
+                onPress={() => handleProcessOrder(item.id)}
+              >
+                <Text style={styles.processText}>Xác nhận xử lý</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* SHIPPING -> COMPLETED */}
+            {item.status === 'SHIPPING' && (
+              <TouchableOpacity
+                style={styles.completeBtn}
+                onPress={() => handleCompleteOrder(item.id)}
+              >
+                <Text style={styles.processText}>Đã giao</Text>
+              </TouchableOpacity>
+            )}
+
           </View>
         )}
       />
@@ -118,5 +218,26 @@ const styles = StyleSheet.create({
   orderId: {
     fontWeight: '700',
     marginBottom: 6,
+  },
+  processBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+    backgroundColor: '#2563eb',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+
+  processText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  completeBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+    backgroundColor: '#16a34a', 
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
 });

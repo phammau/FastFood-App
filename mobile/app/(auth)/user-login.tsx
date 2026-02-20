@@ -35,19 +35,24 @@ export default function UserLogin() {
         return;
       }
 
+      // LƯU USER CHO CẢ ADMIN VÀ USER
+      await AsyncStorage.setItem('role', data.role);
+      await AsyncStorage.setItem('user', JSON.stringify({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      }));
+
       //phan quyen theo user và admin
       if (data.role === 'ADMIN') {
-        await AsyncStorage.setItem('role', 'ADMIN'); // luu role
         router.replace('/(admin)/(admin-tabs)/home');
-
-      }else if (data.role === 'USER') {
-        await AsyncStorage.setItem('role', 'USER');
+      } else if (data.role === 'USER') {
         router.replace('/(user-tabs)/home');
-
-      }else{
+      } else {
         router.replace('/(auth)/user-login');
       }
-
+     
     } catch (error) {
       Alert.alert('Lỗi', 'Không kết nối được server');
     } finally {

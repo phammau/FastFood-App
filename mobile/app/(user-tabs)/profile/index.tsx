@@ -1,34 +1,49 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { useTheme } from '../../../context/ThemeContext';
 
 export default function ProfileScreen() {
+  const { darkMode } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tài khoản</Text>
+    <View style={[
+      styles.container,
+      { backgroundColor: darkMode ? '#121212' : '#f5f5f5' },
+    ]}>
+      <Text style={[
+        styles.title,
+         { color: darkMode ? '#fff' : '#000' },
+      ]}>Tài khoản</Text>
 
       <Item label="📜 Lịch sử đơn hàng" route="history" />
       <Item label="🔔 Thông báo" route="notifications" />
-      <Item label="💳 Thanh toán" route="payment" />
       <Item label="📍 Địa chỉ giao hàng" route="address" />
-      <Item label="⚙️ Cài đặt" route="settings" />
+      <Item label="⚙️ Cài đặt" route="setting" />
       <Item label="🆘 Trung tâm trợ giúp" route="help" />
+      <Item label="🚪 Đăng xuất" route="logout" />
     </View>
   );
 }
 
 function Item({ label, route }: { label: string; route: string }) {
+  const { darkMode } = useTheme();
   return (
     <TouchableOpacity
-      style={styles.item}
-    //   onPress={() => router.push(`/(user-tabs)/profile/${route}`)}
-    onPress={() =>
+      style={[
+        styles.item,
+        { backgroundColor: darkMode ? '#1e1e1e' : '#fff' },
+      ]}
+      onPress={() =>
         router.push({
           pathname: '/(user-tabs)/profile/[screen]',
           params: { screen: route },
         })
       }
     >
-      <Text style={styles.text}>{label}</Text>
+      <Text style={[
+        styles.text,
+        { color: darkMode ? '#fff' : '#111' },
+      ]}>{label}</Text>
     </TouchableOpacity>
   );
 }

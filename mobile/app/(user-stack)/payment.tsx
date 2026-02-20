@@ -10,6 +10,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { API_URL } from '@/constants/api';
+import * as Linking from 'expo-linking';
 
 type PaymentMethod = 'COD' | 'MOMO' | 'BANK';
 
@@ -59,7 +60,7 @@ export default function PaymentScreen() {
   const handleConfirmPay = async () => {
     try {
       if (!userId) {
-        alert('Chưa đăng nhập');
+        alert('Không tìm thấy user');
         return;
       }
 
@@ -67,8 +68,37 @@ export default function PaymentScreen() {
         alert('Giỏ hàng trống');
         return;
       }
+
+      //KT MỞ APP THANH TOÁN
+      if (method === 'MOMO') {
+        const momoUrl = 'momo://';
+        const supported = await Linking.canOpenURL(momoUrl);
+
+        if (supported) {
+          await Linking.openURL(momoUrl);
+        } else {
+          alert('Chưa cài app MoMo');
+          router.replace('/(user-tabs)/home');
+          return; 
+        }
+      }
+
+      if (method === 'BANK') {
+        const bankUrl = 'mbbank://'; // có thể đổi sang ngân hàng khác
+
+        const supported = await Linking.canOpenURL(bankUrl);
+
+        if (supported) {
+          await Linking.openURL(bankUrl);
+        } else {
+          alert('Chưa cài app ngân hàng');
+          router.replace('/(user-tabs)/home');
+          return;
+        }
+      }
       
-      await axios.post(`${API_URL}/api/orders`, {
+      // chi tao don khi mo app ok
+      const res = await axios.post(`${API_URL}/api/orders`, {
         user_id: userId, // lấy từ auth
         items: cart.map(item => ({
           food_id: item.foodId,
@@ -77,13 +107,20 @@ export default function PaymentScreen() {
         })),
       });
 
+      const orderId = res.data.order_id;
+
       // clear cart
       await AsyncStorage.removeItem('cart');
 
+      // COD thi ko can mo app
       router.replace({
         pathname: '/(user-stack)/pay-result',
-        params: { method },
+        params: {
+          method,
+          orderId,
+        },
       });
+
     } catch (err) {
       console.log('Lỗi tạo đơn hàng:', err);
       alert('Thanh toán thất bại');
