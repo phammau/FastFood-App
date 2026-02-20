@@ -53,3 +53,15 @@ export const deleteCustomerById = (id) => {
     );
   });
 };
+
+export const UserModel = {
+  getAll: (cb) => {
+    db.query('SELECT * FROM users', cb);
+  },
+  count: (cb) => {
+    db.query(
+      "SELECT COUNT(*) AS total FROM users WHERE role = 'USER'",
+      cb
+    );
+  }
+};

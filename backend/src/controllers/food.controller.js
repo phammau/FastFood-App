@@ -110,3 +110,27 @@ export const deleteFood = (req, res) => {
     res.json({ message: 'Food deleted' });
   });
 };
+
+export const countFoods = (req, res) => {
+  FoodModel.count((err, results) => {
+    if (err) {
+      console.error('COUNT FOOD ERROR:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+
+    res.json({ total: results[0].total });
+  });
+};
+
+export const deleteOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    await db.query('DELETE FROM orders WHERE id = ?', [orderId]);
+
+    res.json({ message: 'Đã xóa đơn hàng thành công' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};

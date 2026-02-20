@@ -30,4 +30,9 @@ export const FoodModel = {
   delete: (id, cb) => {
     db.query('DELETE FROM foods WHERE id=?', [id], cb);
   },
+
+  count: (callback) => {
+    db.query('SELECT COUNT(*) AS total FROM foods', callback);
+  },
 };
+

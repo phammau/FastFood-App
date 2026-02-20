@@ -4,6 +4,7 @@ import { connectDB } from './src/config/db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import userRoutes from "./src/routes/user.routes.js"
 
 // routes
 import foodRoutes from './src/routes/food.routes.js';
@@ -29,6 +30,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/foods', foodRoutes);  // FOOD
 app.use('/api/orders', orderRoutes);// ORDER (nếu có)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/users', userRoutes); // listUsers
 
 //TEST API
 app.get('/', (req, res) => {

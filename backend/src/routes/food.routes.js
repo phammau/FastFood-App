@@ -1,16 +1,19 @@
 import express from 'express';
 import { upload } from '../middlewares/upload.js';
+
 import {
   getFoods,
   getFoodById,
   addFood,
   updateFood,
   deleteFood,
+  countFoods,
 } from '../controllers/food.controller.js';
 
 const router = express.Router();
 
 // USER
+router.get('/count', countFoods);
 router.get('/', getFoods);
 router.get('/:id', getFoodById);
 
